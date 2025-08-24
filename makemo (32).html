@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration & Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; }
+    .container { max-width: 400px; margin: 40px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
+    input, button { width: 90%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; }
+    button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
+    button:hover { background: #0056b3; }
+    .hidden { display: none; }
+    p { font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="container" id="registerPage">
+  <h3>Welcome to MetaPAY register and get yiur 100k instantly</h3>
+  <h2>Register</h2>
+  <input type="text" id="regUsername" placeholder="Username" required>
+  <input type="password" id="regPassword" placeholder="Password" required>
+  <input type="checkbox"><br>I have agree with your terms and policy
+  <button onclick="register()">Register</button>
+  <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+</div>
+
+<!-- LOGIN PAGE -->
+<div class="container hidden" id="loginPage">
+<h3>Welcome back to MetaPAY</h3>
+  <h2>Login</h2>
+  <input type="text" id="loginUsername" placeholder="Username" required>
+  <input type="password" id="loginPassword" placeholder="Password" required>
+  <button onclick="login()">Login</button>
+  <p>No account? <a href="#" onclick="showRegister()">Register</a></p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="container hidden" id="dashboardPage">
+  <h2>Welcome, <span id="userName"></span></h2>
+  <p>Your Welcome Bonus: <b>₦<span id="userBalance">100000</span></b></p>
+  <p id="codeSection" class="hidden">Your Withdrawal Code: <b><span id="userCode"></span></b></p>
+  <button onclick="showCashout()">Cash Out</button>
+  <button onclick="showBuyCode()">Buy Code</button>
+</div>
+
+<!-- CASH OUT PAGE -->
+<div class="container hidden" id="cashoutPage">
+  <h2>Cash Out</h2>
+  <input type="text" id="bankName" placeholder="Bank Name" required>
+  <input type="text" id="accountNumber" placeholder="Account Number" required>
+  <input type="text" id="accountName" placeholder="Account Name" required>
+  <input type="text" id="withdrawCode" placeholder="Enter Withdrawal Code" required>
+  <button onclick="submitCashout()">Withdraw</button>
+  <p id="cashoutMsg"></p>
+  <button onclick="backToDashboard()">Back</button>
+</div>
+
+<!-- BUY CODE PAGE -->
+<div class="container hidden" id="buyCodePage">
+  <h2>Buy Code</h2>
+  <p>Make payment of 5k to:</p>
+  <b>Account: 8144281750</b>
+  <br>
+  <b>
+  Bank:moniepoint</b><br>
+<b>  Bank holder:Dauda joseph</b>
+  <button onclick="submitBuyCode()">I Have Made Payment</button>
+  <p id="buyMsg"></p>
+  <button onclick="backToDashboard()">Back</button>
+</div>
+
+<script>
+// Switch Pages
+function showLogin(){ document.getElementById("registerPage").classList.add("hidden"); document.getElementById("loginPage").classList.remove("hidden"); }
+function showRegister(){ document.getElementById("loginPage").classList.add("hidden"); document.getElementById("registerPage").classList.remove("hidden"); }
+function showCashout(){ document.getElementById("dashboardPage").classList.add("hidden"); document.getElementById("cashoutPage").classList.remove("hidden"); }
+function showBuyCode(){ document.getElementById("dashboardPage").classList.add("hidden"); document.getElementById("buyCodePage").classList.remove("hidden"); }
+function backToDashboard(){ document.getElementById("cashoutPage").classList.add("hidden"); document.getElementById("buyCodePage").classList.add("hidden"); document.getElementById("dashboardPage").classList.remove("hidden"); }
+
+// Register
+function register(){
+  let user = document.getElementById("regUsername").value;
+  let pass = document.getElementById("regPassword").value;
+  if(user && pass){
+    localStorage.setItem("username", user);
+    localStorage.setItem("password", pass);
+    localStorage.setItem("balance", 100000);
+    localStorage.removeItem("withdrawCode"); // no code yet
+    alert("Registration successful! You need to buy code before cashing out.");
+    showLogin();
+  } else {
+    alert("Fill all fields");
+  }
+}
+
+// Login
+function login(){
+  let user = document.getElementById("loginUsername").value;
+  let pass = document.getElementById("loginPassword").value;
+  let storedUser = localStorage.getItem("username");
+  let storedPass = localStorage.getItem("password");
+  if(user === storedUser && pass === storedPass){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("dashboardPage").classList.remove("hidden");
+    document.getElementById("userName").innerText = storedUser;
+    document.getElementById("userBalance").innerText = localStorage.getItem("balance");
+
+    let code = localStorage.getItem("withdrawCode");
+    if(code){
+      document.getElementById("userCode").innerText = code;
+      document.getElementById("codeSection").classList.remove("hidden");
+    } else {
+      document.getElementById("codeSection").classList.add("hidden");
+    }
+  } else {
+    alert("Wrong username or password");
+  }
+}
+
+// Submit Cashout
+function submitCashout(){
+  let bank = document.getElementById("bankName").value;
+  let acct = document.getElementById("accountNumber").value;
+  let name = document.getElementById("accountName").value;
+  let code = document.getElementById("withdrawCode").value;
+
+  let correctCode = localStorage.getItem("withdrawCode");
+  let balance = parseInt(localStorage.getItem("balance")) || 0;
+
+  if(bank && acct && name && code){
+    if(correctCode && code === correctCode){
+      if(balance > 0){
+        document.getElementById("cashoutMsg").innerText = "Withdrawal request submitted for processing.";
+        localStorage.setItem("balance", 0);
+        document.getElementById("userBalance").innerText = "0";
+      } else {
+        document.getElementById("cashoutMsg").innerText = "You have no balance left to withdraw.";
+      }
+    } else {
+      alert("Invalid or missing withdrawal code! Please buy code first.");
+    }
+  } else {
+    alert("Please fill all details and enter your code.");
+  }
+}
+
+// Buy Code
+function submitBuyCode(){
+  // Generate withdrawal code after payment
+  let code = Math.floor(10000 + Math.random() * 90000); // random 5-digit code
+  localStorage.setItem("withdrawCode", code);
+  document.getElementById("buyMsg").innerText = "Payment being processed... Your withdrawal code is now active.";
+}
+</script>
+</body>
+</html>
